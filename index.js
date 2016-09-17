@@ -14,25 +14,38 @@ let stuntPoints = (arr) => stunted(arr) ? arr[2] : 0;
 let sum = (a,b) => parseInt(a) + parseInt(b);
 let diceSum = (dice) => dice.reduce(sum);
 
+let history = [];
+
 let gen = (user) => {
     let dice = roll();
     let res = {
-        user: user,
-        dice: dice,
-        stunt: stunted(dice),
-        stuntPoints: stuntPoints(dice),
-        sum: diceSum(dice)
+        eventType: 'roll',
+        eventInfo: {
+            user: user,
+            dice: dice,
+            stunt: stunted(dice),
+            stuntPoints: stuntPoints(dice),
+            sum: diceSum(dice)
+        }
     };
 
     return res;
 };
 
-console.log(gen('t'));
-
 io.on('connection', function(socket) {
-    console.log('sockets');
+    socket.on('register', function(msg) {
+        console.log('registered');
+        io.emit('register', history);
+    });
+
     socket.on('roll', function(msg) {
-        io.emit('roll', gen(msg.username));
+        let res = gen(msg.username);
+        if (history.length > 20) {
+            history.shift();
+        };
+        history.push(res);
+        console.log(history);
+        io.emit('roll', res);
     });
 });
 

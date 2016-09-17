@@ -23,16 +23,19 @@
     </style>
   </head>
   <body>
+      <div id="dice">
       <button id="roll">Roll</button>
       <ul id="results"></ul>
-
-      <label>Username</label><input id="username" type="text"/>
+    </div>
+    
+      <form id="register">
+        <label>Username</label><input id="username" type="text"/>
+        <input type="submit">
+      </form>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let socket = io();
-        let dices = ['&#9856;', '&#9857;', '&#9858;', '&#9859;', '&#9860;', '&#9861;' ];
-
         let tpl = (msg) => `
         <li>
         <span class="description">${msg.user} rolled: </span>
@@ -42,15 +45,28 @@
         <span class="result"> for ${msg.sum} points! ${ msg.stunt ? `with ${msg.stuntPoints} stunt points!` : '' }</span>
         </li>`;
 
-        $('#roll').click(function() {
-            socket.emit('roll', { username: $("#username").val()});
-            return false;
-        });
+        $(function() {
+            $("#dice").hide();
 
-        socket.on('roll', function(msg) {
-            console.log(msg);
-            msg.dices = msg.dice.map((d) => dices[d - 1]);
-            $("#results").prepend(tpl(msg));
+            $('#roll').click(function() {
+                socket.emit('roll', { username: $("#username").val()});
+                return false;
+            });
+
+            $("#register").submit(function(e) {
+                socket.emit('register');
+                $(this).hide();
+                $("#dice").show();
+                e.preventDefault();
+            });
+
+            socket.on('roll', function(msg) {
+                $("#results").prepend(tpl(msg.eventInfo));
+            });
+
+            socket.on('register', function(msg) {
+                console.log(msg);
+            });
         });
     </script>
   </body>
