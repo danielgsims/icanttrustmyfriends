@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Fantasy AGE Dice Roller</title>
+    <style>
+        li {
+            padding: 0;
+            list-style-type: none;
+            margin: 0;
+        }
+        span {
+            padding: 0;
+        }
+        #results .dice {
+            font-size: 3em;
+        }
+
+        #results .stunt {
+            color: black;
+            background-color: red;
+        }
+
+    </style>
+  </head>
+  <body>
+      <button id="roll">Roll</button>
+      <ul id="results"></ul>
+
+      <label>Username</label><input id="username" type="text"/>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = io();
+        let dices = ['&#9856;', '&#9857;', '&#9858;', '&#9859;', '&#9860;', '&#9861;' ];
+
+        let tpl = (msg) => `
+        <li>
+        <span class="description">${msg.user} rolled: </span>
+        <span class="dice">${msg.dice[0]}</span>
+        <span class="dice">${msg.dice[1]}</span>
+        <span class="dice stunt">${msg.dice[2]}</span>
+        <span class="result"> for ${msg.sum} points! ${ msg.stunt ? `with ${msg.stuntPoints} stunt points!` : '' }</span>
+        </li>`;
+
+        $('#roll').click(function() {
+            socket.emit('roll', { username: $("#username").val()});
+            return false;
+        });
+
+        socket.on('roll', function(msg) {
+            console.log(msg);
+            msg.dices = msg.dice.map((d) => dices[d - 1]);
+            $("#results").prepend(tpl(msg));
+        });
+    </script>
+  </body>
+</html>
