@@ -1,6 +1,6 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+let app = require('express')();
+let http = require('http').Server(app);
+let io = require('socket.io')(http);
 
 app.get('/', function(req, res){
      res.sendFile(__dirname + '/public/index.html');
@@ -34,7 +34,19 @@ let gen = (user) => {
 
 io.on('connection', function(socket) {
     socket.on('register', function(user) {
-        io.emit('event', { eventType: 'join', eventInfo: user});
+        //set the user for this socket
+        socket.user = user;
+
+        //broadcast the user joined message
+        let msg = { eventType: 'join', eventInfo: user};
+        //tell others we've joined
+        socket.broadcast.emit('event', msg);
+
+        //add this event to history
+        history.push(msg);
+
+        //load history
+        socket.emit('event', { eventType: 'load', eventInfo: { history: history } });
     });
 
     socket.on('roll', function(msg) {
@@ -43,11 +55,14 @@ io.on('connection', function(socket) {
             history.shift();
         };
         history.push(res);
-        console.log(history);
         io.emit('event', res);
     });
-});
 
+    socket.on('disconnect', function() {
+        let msg = { eventType: 'disconnect', eventInfo: socket.user};
+        socket.broadcast.emit('event', msg);
+    });
+});
 
 http.listen(3000);
 console.log('listening on *:3000');

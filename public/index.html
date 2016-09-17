@@ -32,7 +32,8 @@
         <span class="result"> for ${msg.sum} points! ${ msg.stunt ? `with ${msg.stuntPoints} stunt points!` : '' }</span>
         </li>`;
 
-        let joinTpl = (user) => `<li> ${user} joined </li>`
+        let joinTpl = (user) => `<li> ${user} joined. </li>`;
+        let dcTpl = (user) => `<li> ${user} left. </li>`;
         $(function() {
             let socket = io();
             let $roll = $("#roll");
@@ -55,7 +56,7 @@
                 $dice.show();
             });
 
-            socket.on('event', function(msg) {
+            function handle (msg) {
                 switch (msg.eventType) {
                     case 'roll':
                         console.log(msg);
@@ -65,12 +66,19 @@
                         console.log(msg);
                         $results.prepend(joinTpl(msg.eventInfo));
                         break;
+                    case 'load':
+                        for (let e of msg.eventInfo.history) {
+                            handle(e);
+                        }
+                        break;
+                    case 'disconnect':
+                        console.log(msg);
+                        $results.prepend(dcTpl(msg.eventInfo));
+                        break;
                 }
-            });
+            };
 
-            socket.on('register', function(msg) {
-                console.log(msg);
-            });
+            socket.on('event', handle);
         });
     </script>
   </body>
