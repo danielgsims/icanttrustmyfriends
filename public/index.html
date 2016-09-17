@@ -3,18 +3,6 @@
   <head>
     <title>Fantasy AGE Dice Roller</title>
     <style>
-        li {
-            padding: 0;
-            list-style-type: none;
-            margin: 0;
-        }
-        span {
-            padding: 0;
-        }
-        #results .dice {
-            font-size: 3em;
-        }
-
         #results .stunt {
             color: black;
             background-color: red;
@@ -35,7 +23,6 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        let socket = io();
         let tpl = (msg) => `
         <li>
         <span class="description">${msg.user} rolled: </span>
@@ -45,23 +32,40 @@
         <span class="result"> for ${msg.sum} points! ${ msg.stunt ? `with ${msg.stuntPoints} stunt points!` : '' }</span>
         </li>`;
 
+        let joinTpl = (user) => `<li> ${user} joined </li>`
         $(function() {
-            $("#dice").hide();
+            let socket = io();
+            let $roll = $("#roll");
+            let $un = $("#username");
+            let $register = $("#register");
+            let $dice = $("#dice");
+            let $results = $("#results");
 
-            $('#roll').click(function() {
-                socket.emit('roll', { username: $("#username").val()});
+            $dice.hide();
+            $roll.click(function() {
+                console.log('roll!');
+                socket.emit('roll', { username: $un.val()});
                 return false;
             });
 
-            $("#register").submit(function(e) {
-                socket.emit('register');
-                $(this).hide();
-                $("#dice").show();
+            $register.submit(function(e) {
                 e.preventDefault();
+                socket.emit('register', $un.val());
+                $register.hide();
+                $dice.show();
             });
 
-            socket.on('roll', function(msg) {
-                $("#results").prepend(tpl(msg.eventInfo));
+            socket.on('event', function(msg) {
+                switch (msg.eventType) {
+                    case 'roll':
+                        console.log(msg);
+                        $results.prepend(tpl(msg.eventInfo));
+                        break;
+                    case 'join':
+                        console.log(msg);
+                        $results.prepend(joinTpl(msg.eventInfo));
+                        break;
+                }
             });
 
             socket.on('register', function(msg) {

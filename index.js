@@ -33,9 +33,8 @@ let gen = (user) => {
 };
 
 io.on('connection', function(socket) {
-    socket.on('register', function(msg) {
-        console.log('registered');
-        io.emit('register', history);
+    socket.on('register', function(user) {
+        io.emit('event', { eventType: 'join', eventInfo: user});
     });
 
     socket.on('roll', function(msg) {
@@ -45,7 +44,7 @@ io.on('connection', function(socket) {
         };
         history.push(res);
         console.log(history);
-        io.emit('roll', res);
+        io.emit('event', res);
     });
 });
 
